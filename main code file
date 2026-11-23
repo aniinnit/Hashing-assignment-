@@ -1,0 +1,85 @@
+import hashlib
+
+
+def sha256_hash(text: str) -> str:
+    """Return the SHA-256 hex digest of a string."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# 1. Hash a word
+word = "cybersecurity"
+
+# 2. Hash a sentence
+sentence = "Hashing is a one-way function used to protect data integrity."
+
+# 3. Hash a paragraph (5+ lines)
+paragraph = """Cybersecurity is the practice of protecting systems and data.
+It covers networks, applications, and people.
+Hashing helps verify that data has not been changed.
+Passwords are stored as hashes instead of plain text.
+A good hash function is fast to compute but hard to reverse."""
+
+print("=== 1. WORD ===")
+print("Input :", word)
+print("Hash  :", sha256_hash(word))
+
+print("\n=== 2. SENTENCE ===")
+print("Input :", sentence)
+print("Hash  :", sha256_hash(sentence))
+
+print("\n=== 3. PARAGRAPH ===")
+print("Input :\n" + paragraph)
+print("Hash  :", sha256_hash(paragraph))
+
+# ---- Comparing with the characteristics of hashing ----
+print("\n=== CHARACTERISTICS ===")
+
+# 1. Fixed length
+print("\n[1] Fixed length digest")
+for name, data in [("word", word), ("sentence", sentence), ("paragraph", paragraph)]:
+    print(f"  {name:10} input length = {len(data):4} chars -> digest length = {len(sha256_hash(data))} hex chars")
+
+# 2. Deterministic
+print("\n[2] Same input -> same digest")
+h1, h2 = sha256_hash(word), sha256_hash(word)
+print("  Run 1:", h1)
+print("  Run 2:", h2)
+print("  Identical?", h1 == h2)
+
+# 3. Avalanche effect
+print("\n[3] Small change -> very different digest")
+a, b = "cybersecurity", "cybersecurity."  # only a full stop added
+ha, hb = sha256_hash(a), sha256_hash(b)
+print(f"  '{a}'  -> {ha}")
+print(f"  '{b}' -> {hb}")
+bits_a = bin(int(ha, 16))[2:].zfill(256)
+bits_b = bin(int(hb, 16))[2:].zfill(256)
+diff = sum(x != y for x, y in zip(bits_a, bits_b))
+print(f"  Bits that differ: {diff}/256 ({diff / 256:.0%})")
+
+# 4. One-way
+print("\n[4] Hard to reverse")
+print("  Digest:", sha256_hash(word))
+print("  Python's hashlib has no 'unhash' function. The only way back is guessing")
+print("  inputs and hashing them (brute force / dictionary attack).")
+target = sha256_hash("cat")
+for guess in ["dog", "bird", "cat"]:
+    if sha256_hash(guess) == target:
+        print(f"  Brute-force guessing found the input: '{guess}' (only easy because it's a tiny, guessable word)")
+        break
+
+# 5. Collisions
+print("\n[5] Collisions")
+print("  SHA-256 has 2^256 possible outputs but infinite possible inputs,")
+print("  so collisions must exist in theory, but none has ever been found.")
+print("  Demo with a deliberately weak hash (first 2 hex chars of SHA-256 = only 256 outputs):")
+seen = {}
+i = 0
+while True:
+    msg = f"message{i}"
+    short = sha256_hash(msg)[:2]
+    if short in seen:
+        print(f"  Collision! '{seen[short]}' and '{msg}' both give '{short}' (after {i + 1} tries)")
+        break
+    seen[short] = msg
+    i += 1
